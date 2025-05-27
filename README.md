@@ -35,6 +35,9 @@ Tech Stack
 3. Connect to Wi-Fi and set up your cloud dashboard (ThingSpeak, etc.)
 4. See live data and alerts from your monitoring system.
 
+Simulation link 
+https://www.tinkercad.com/things/jQWTegcEdv1-air-quality-monitoring-system/editel?returnTo=https%3A%2F%2Fwww.tinkercad.com%2Fdashboard
+
 
 
 
