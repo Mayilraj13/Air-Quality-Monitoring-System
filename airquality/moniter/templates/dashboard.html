@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Air Quality Monitoring Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0"></script>
+
+    <style>
+        body {
+            background-color: #f4f6f9;
+        }
+        .status-card {
+            font-size: 1.2rem;
+            font-weight: 500;
+        }
+        .chart-container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0px 3px 10px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body class="p-4">
+
+<div class="container">
+    <h2 class="text-center mb-4">🌍 Air Quality Monitoring & Prediction</h2>
+
+    <!-- Status Card -->
+    <div class="card text-center mb-4">
+        <div class="card-body">
+            <h4 class="status-card">Current Status: <span id="statusText">Loading...</span></h4>
+            <p class="text-muted mb-0" id="statusDesc">Please wait for live data...</p>
+        </div>
+    </div>
+
+    <!-- Chart -->
+    <div class="chart-container">
+        <canvas id="airChart" height="100"></canvas>
+    </div>
+</div>
+
+<script>
+    let airChart;
+
+    function getStatus(ppm) {
+        if (ppm <= 50) return { text: "Good", color: "green", desc: "Air quality is excellent." };
+        if (ppm <= 100) return { text: "Moderate", color: "orange", desc: "Air quality is acceptable but may affect sensitive individuals." };
+        return { text: "Poor", color: "red", desc: "Air quality is unhealthy. Minimize outdoor activities." };
+    }
+
+    async function fetchDataAndUpdateChart() {
+        try {
+            const response = await fetch('/get-air-data/');
+            const data = await response.json();
+
+            const labels = data.times.concat(data.pred_times);
+            const actualData = data.values.concat(Array(data.pred_times.length).fill(null));
+            const predictedData = Array(data.values.length).fill(null).concat(data.pred_values);
+
+            // Update status card
+            if (data.values.length > 0) {
+                const latestPPM = data.values[data.values.length - 1];
+                const status = getStatus(latestPPM);
+                document.getElementById("statusText").innerText = status.text;
+                document.getElementById("statusText").style.color = status.color;
+                document.getElementById("statusDesc").innerText = status.desc;
+            }
+
+            if (!airChart) {
+                const ctx = document.getElementById('airChart').getContext('2d');
+                airChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Actual Air Quality (PPM)',
+                                data: actualData,
+                                borderColor: 'rgb(75, 192, 192)',
+                                tension: 0.3,
+                                fill: false
+                            },
+                            {
+                                label: 'Predicted Air Quality (PPM)',
+                                data: predictedData,
+                                borderColor: 'rgb(255, 99, 132)',
+                                borderDash: [5, 5],
+                                tension: 0.3,
+                                fill: false
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { position: 'top' },
+                            annotation: {
+                                annotations: {
+                                    goodZone: {
+                                        type: 'box',
+                                        yMin: 0,
+                                        yMax: 50,
+                                        backgroundColor: 'rgba(0, 255, 0, 0.05)',
+                                    },
+                                    moderateZone: {
+                                        type: 'box',
+                                        yMin: 51,
+                                        yMax: 100,
+                                        backgroundColor: 'rgba(255, 165, 0, 0.05)',
+                                    },
+                                    poorZone: {
+                                        type: 'box',
+                                        yMin: 101,
+                                        yMax: 300,
+                                        backgroundColor: 'rgba(255, 0, 0, 0.05)',
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: { display: true, text: 'PPM' }
+                            },
+                            x: {
+                                title: { display: true, text: 'Time' }
+                            }
+                        }
+                    }
+                });
+            } else {
+                airChart.data.labels = labels;
+                airChart.data.datasets[0].data = actualData;
+                airChart.data.datasets[1].data = predictedData;
+                airChart.update();
+            }
+        } catch (error) {
+            console.error("Error fetching air data:", error);
+        }
+    }
+
+    // Initial load + auto-refresh
+    fetchDataAndUpdateChart();
+    setInterval(fetchDataAndUpdateChart, 20000);
+</script>
+
+</body>
+</html>
