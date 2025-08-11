@@ -1,45 +1,51 @@
- IoT-Based Air Quality Monitoring System – Smart Environment Tracker
+Air Quality Monitoring & Prediction System
 
-The project is an IoT-based Air Quality Monitoring System that is capable of sensing and reporting real-time air pollution levels. It employs environmental sensors to record important parameters of air quality such as PM2.5, PM10, CO2, temperature, and humidity, and sends information to a cloud platform for real-time visualization and analysis.
+This  source files for a simple Air Quality Monitoring project using ESP32 + MQ-135, ThingSpeak, and a Django dashboard with basic prediction.
 
-Features
+ Included files
+- `esp32/air_quality.ino` - Arduino sketch for ESP32 to read MQ-135 and send data to ThingSpeak.
+- `monitor/views.py` - Django app views (dashboard and API endpoint).
+- `monitor/urls.py` - URL routes for the monitor app.
+- `monitor/templates/dashboard.html` - Dashboard template (Bootstrap + Chart.js).
+- `requirements.txt` - Python dependencies.
+- `README.md` - This file.
 
-*  Real-time monitoring of air quality using MQ135, DHT11/DHT22, and Dust (PM2.5/PM10) sensor
-*  Web dashboard data  visualization using Grafana / Blynk / ThingSpeak
-*  Keeps a record of historical sensor data for analyzing trends
-*  Alarms when pollutant concentrations exceed safe thresholds
-*  Low power usage and inexpensive design
-*  Easily deployable in homes, schools, offices, or smart cities
+Quick setup (Django app)
+1. Create a Django project (if you don't have one):
+django-admin startproject airdash_project
+cd airdash_project
+python manage.py startapp monitor
 
-Tech Stack
+2. Copy the `monitor` files into the `monitor` app folder in your Django project. Create a `templates` folder inside `monitor` and place `dashboard.html` there (`monitor/templates/dashboard.html`).
 
-* Hardware : Arduino UNO / NodeMCU / ESP32, MQ135, PM2.5 Sensor,
-   DHT11/DHT22
-* Programming : C/C++ (Arduino IDE)
-* IoT Connectivity : Wi-Fi (ESP8266/ESP32)
-* Cloud : ThingSpeak / InfluxDB
-* Visualization : Grafana or Blynk
+3. Add `'monitor'` to `INSTALLED_APPS` in `airdash_project/settings.py` and ensure `TEMPLATES` is configured to find app templates (default Django setup works).
 
- Applications
+4. Add the app URLs to your project `urls.py`:
+from django.urls import path, include
 
-* Smart City Air Monitoring
-* Industrial Pollution Tracking
-* School and Office Environment Auditing
-* Personal Health & Safety Device
+urlpatterns = [
+    path('', include('monitor.urls')),
+]
 
- 
- How to Run
+5. Install requirements:
+pip install -r requirements.txt
 
-1. Hook up sensors according to the circuit diagram.
-2. Program the Arduino/ESP32 with the given code.
-3. Connect to Wi-Fi and set up your cloud dashboard (ThingSpeak, etc.)
-4. See live data and alerts from your monitoring system.
+6. Edit `monitor/views.py` and replace `THINGSPEAK_CHANNEL_ID` with your ThingSpeak channel ID. Also set `THINGSPEAK_RESULTS` if desired.
 
-Simulation link 
-https://www.tinkercad.com/things/jQWTegcEdv1-air-quality-monitoring-system/editel?returnTo=https%3A%2F%2Fwww.tinkercad.com%2Fdashboard
+7. Run the server:
+python manage.py runserver
 
+8. Open `http://127.0.0.1:8000/` to see the dashboard. The page will call `/get-air-data/` to fetch data from ThingSpeak and will update every 20 seconds.
 
+ESP32 setup
+- Open `esp32/air_quality.ino` in Arduino IDE (or PlatformIO).
+- Replace `YOUR_WIFI_NAME`, `YOUR_WIFI_PASSWORD`, and `YOUR_THINGSPEAK_WRITE_API_KEY`.
+- Upload to ESP32, power it, and ensure data appears in your ThingSpeak channel.
 
-
-
+Notes
+- MQ-135 analog readings are scaled with a simple linear conversion in the sketch. Calibrate the sensor for accurate PPM readings.
+- For better predictions replace the linear regression with ARIMA or LSTM models.
+- You can extend the project with notifications, maps, and database storage.
+  
+  Simulation link : https://wokwi.com/projects/new/esp32
 
